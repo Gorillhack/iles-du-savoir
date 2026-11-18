@@ -47,7 +47,7 @@ export function IntroTour({ child, onClose, onGo, onPractice }: {
         {step === 0 && (
           <div className="stack">
             <p className="intro__speech">Salut {child.displayName} ! Je suis ton compagnon d’exploration.</p>
-            <p>Je t’aide à t’organiser, à comprendre les consignes et à trouver des pistes. Je ne donne pas les réponses : c’est toi l’explorateur·rice.</p>
+            <p>Je t’aide à t’organiser, à comprendre les consignes et à trouver des pistes. Je ne donne pas les réponses. À toi de mener l’aventure !</p>
           </div>
         )}
 

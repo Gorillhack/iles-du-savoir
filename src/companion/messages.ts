@@ -66,7 +66,7 @@ export const MESSAGES: Partial<Record<CompanionEventType, string[]>> = {
     'Tu as vu ma sacoche ? Elle est pleine de cartes.',
     'Le refuge est encore plus joli avec tes lucioles.',
     'Je m’entraîne à faire coucou.',
-    'Les panda roux adorent grimper aux arbres.',
+    'Les pandas roux adorent grimper aux arbres.',
   ],
 };
 
