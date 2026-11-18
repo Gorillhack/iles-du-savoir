@@ -344,6 +344,52 @@ const probleme: Mission = {
   },
 };
 
-export const MISSIONS: Mission[] = [cm1Calcul, cm2Fractions, probleme];
+/** Mission d'essai de première visite : découverte de l'aide, sans lien avec l'école. */
+const essai: Mission = {
+  id: 'essai-noisettes',
+  title: 'Les noisettes de Pépin',
+  subject: 'maths',
+  topic: 'Mission d’essai',
+  level: 'adaptatif',
+  practice: true,
+  intro: 'Une petite mission pour découvrir comment je t’aide. Ce n’est pas un devoir : rien n’est ajouté à ton carnet.',
+  steps: {
+    CM1: [
+      {
+        id: 'e1',
+        prompt: 'Pépin range ses noisettes dans 4 sacs de 15 noisettes. Combien de noisettes en tout ?',
+        answer: { kind: 'number', value: 60, unit: 'noisettes' },
+        reformulate: { question: 'Que cherche-t-on ?', options: ['Le nombre total de noisettes', 'Le nombre de sacs', 'Le nombre de noisettes dans un sac'], correct: 0, explanation: 'On cherche combien il y a de noisettes dans les 4 sacs réunis.' },
+        hint: '4 sacs de 15, c’est 15 + 15 + 15 + 15, ou 4 × 15.',
+        decompose: { intro: 'On découpe 15 en 10 et 5.', substeps: [{ prompt: '4 × 10 = ?', answer: { kind: 'number', value: 40 } }, { prompt: '4 × 5 = ?', answer: { kind: 'number', value: 20 } }, { prompt: '40 + 20 = ?', answer: { kind: 'number', value: 60 } }], outro: 'Combien de noisettes en tout ?' },
+        example: 'Exemple : 3 boîtes de 12 crayons. 3 × 10 = 30 et 3 × 2 = 6, donc 36 crayons.',
+        commonErrors: [{ value: 19, message: 'Tu as additionné 4 et 15. Il y a 4 sacs de 15 noisettes chacun.' }],
+        success: 'Bravo, 60 noisettes !',
+      },
+    ],
+    CM2: [
+      {
+        id: 'e1',
+        prompt: 'Pépin a 48 noisettes. Il en mange le quart. Combien de noisettes lui reste-t-il ?',
+        answer: { kind: 'number', value: 36, unit: 'noisettes' },
+        reformulate: { question: 'Que cherche-t-on ?', options: ['Les noisettes qui restent', 'Les noisettes mangées', 'Le nombre de parts'], correct: 0, explanation: 'On cherche ce qui reste après avoir mangé un quart.' },
+        hint: 'Trouve d’abord le quart de 48, puis enlève-le.',
+        decompose: { intro: 'Deux étapes.', substeps: [{ prompt: 'Le quart de 48 : 48 ÷ 4 = ?', answer: { kind: 'number', value: 12 } }, { prompt: '48 − 12 = ?', answer: { kind: 'number', value: 36 } }], outro: 'Combien en reste-t-il ?' },
+        example: 'Exemple : 20 billes, on en donne le quart. 20 ÷ 4 = 5, et 20 − 5 = 15 billes restent.',
+        commonErrors: [{ value: 12, message: 'C’est le quart qu’il a mangé. La question demande ce qui reste.' }],
+        success: 'Exact : il reste 36 noisettes.',
+      },
+    ],
+  },
+  check: {
+    question: 'Dans une mission, que fait Pépin quand tu demandes un indice ?',
+    options: ['Il donne une piste, sans la réponse', 'Il donne directement la réponse', 'Il passe à la question suivante'],
+    correct: 0,
+    explanation: 'Je donne des pistes, puis je découpe avec toi si besoin. C’est toi qui trouves la réponse.',
+  },
+};
+
+export const MISSIONS: Mission[] = [cm1Calcul, cm2Fractions, probleme, essai];
+export const PRACTICE_MISSION = essai;
 
 export const getMission = (id?: string) => MISSIONS.find((m) => m.id === id);

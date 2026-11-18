@@ -44,6 +44,8 @@ export interface Mission {
   topic: string;
   /** Niveau visé ; « adaptatif » = contenu selon le niveau de l'enfant. */
   level: Level | 'adaptatif';
+  /** Mission d'essai de découverte : jamais liée à un devoir ni au planning. */
+  practice?: boolean;
   intro: string;
   steps: MissionStep[] | Record<Level, MissionStep[]>;
   /** Petite question finale de vérification de la compréhension. */

@@ -6,6 +6,8 @@ import { activeSession } from '../../domain/logic';
 import type { Child, Homework, WorkSession } from '../../domain/types';
 import { useStore } from '../../state/store';
 import { Icon } from '../components/Icon';
+import { useCompanionEmit } from '../../companion/CompanionProvider';
+import { PepinLive } from '../../companion/Pepin';
 import { Panda, type PandaMood } from '../components/Panda';
 import { Button, SubjectTag } from '../components/ui';
 import { MissionPlayer, type MissionHandle } from './MissionPlayer';
@@ -107,6 +109,9 @@ function SessionEnd({ session, child, onHome }: { session: WorkSession; child: C
   );
 }
 
+/** Séances déjà annoncées par Pépin (pas de répétition en revenant du carnet). */
+const announcedSessions = new Set<string>();
+
 export function Session({ child, onExit }: { child: Child; onExit: () => void }) {
   const { data, dispatch } = useStore();
   const session = activeSession(data, child.id);
@@ -119,11 +124,20 @@ export function Session({ child, onExit }: { child: Child; onExit: () => void })
   const [breakOffered, setBreakOffered] = useState(false);
   const [justFinished, setJustFinished] = useState(false);
   const missionRef = useRef<MissionHandle | null>(null);
+  const emit = useCompanionEmit();
   const headingRef = useRef<HTMLHeadingElement>(null);
 
   const hwId = session?.order[session.currentIndex];
   const hw = data.homeworks.find((h) => h.id === hwId);
   const mission = getMission(hw?.missionId);
+
+  // Encouragement de début de séance : une seule fois par séance.
+  useEffect(() => {
+    if (!session || announcedSessions.has(session.id)) return;
+    announcedSessions.add(session.id);
+    emit({ type: 'session_start' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.id]);
 
   // Démarre le devoir courant et remet l'aide à zéro à chaque changement de tâche.
   useEffect(() => {
@@ -173,6 +187,7 @@ export function Session({ child, onExit }: { child: Child; onExit: () => void })
     if (!hw) return;
     if (mission && hw.progress !== 'termine') { missionRef.current?.nextHelp(); return; }
     if (hintLevel < genericHints(hw).length) {
+      emit({ type: 'hint' });
       setHintLevel(hintLevel + 1);
       dispatch({ type: 'hw/help', id: hw.id, kind: hintLevel === 0 ? 'reformulation' : 'indice' });
     }
@@ -183,11 +198,13 @@ export function Session({ child, onExit }: { child: Child; onExit: () => void })
     setSignal('bloque');
     if (mission && hw.progress !== 'termine') missionRef.current?.openDecomposition();
     else setHintLevel(Math.max(hintLevel, 3));
+    emit({ type: 'stuck' });
   };
   const sendAdult = () => {
     if (!hw) return;
     dispatch({ type: 'hw/help', id: hw.id, kind: 'adulte', detail: adultMsg.trim() || undefined });
     setSignal('adulte'); setAdultMsg('');
+    emit({ type: 'adult_requested' });
   };
 
   const signalMood: PandaMood = signal === 'adulte' ? 'encouragement' : 'reflexion';
@@ -206,7 +223,7 @@ export function Session({ child, onExit }: { child: Child; onExit: () => void })
           </span>
         </div>
         <span className="session-time"><Icon name="clock" size={18} /> {formatDuration(session.secondsWorked)}</span>
-        <Button variant="secondary" icon="pause" onClick={() => { setPaused(true); dispatch({ type: 'session/pause', sessionId: session.id }); }}>Pause</Button>
+        <Button variant="secondary" icon="pause" onClick={() => { setPaused(true); dispatch({ type: 'session/pause', sessionId: session.id }); emit({ type: 'pause' }); }}>Pause</Button>
       </header>
 
       <main className="session-body" id="contenu">
@@ -255,7 +272,7 @@ export function Session({ child, onExit }: { child: Child; onExit: () => void })
                 hw={hw}
                 child={child}
                 hintLevel={hintLevel}
-                onDone={(note) => { dispatch({ type: 'hw/childDone', id: hw.id, note: note.trim() || undefined }); setJustFinished(true); }}
+                onDone={(note) => { dispatch({ type: 'hw/childDone', id: hw.id, note: note.trim() || undefined }); setJustFinished(true); emit({ type: 'task_done' }); }}
               />
             )}
 
@@ -307,13 +324,16 @@ export function Session({ child, onExit }: { child: Child; onExit: () => void })
         )}
       </main>
 
+      {/* Pépin discret pendant le travail : petit, dans un coin, ne bloque aucun bouton. */}
+      {!paused && <PepinLive variant="dock" size={60} />}
+
       {paused && (
         <div className="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title">
           <div>
-            <Panda mood="reflexion" size={150} animated={child.preferences.animations} />
+            <PepinLive variant="hero" size={160} />
             <h2 id="pause-title">Pause</h2>
             <p>Bois un verre d’eau, étire-toi. Ton travail est enregistré.</p>
-            <Button variant="sun" size="xl" icon="play" onClick={() => setPaused(false)} autoFocus>Reprendre</Button>
+            <Button variant="sun" size="xl" icon="play" onClick={() => { setPaused(false); emit({ type: 'resume' }); }} autoFocus>Reprendre</Button>
           </div>
         </div>
       )}

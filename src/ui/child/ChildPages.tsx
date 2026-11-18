@@ -4,7 +4,9 @@ import { childHomeworks } from '../../domain/logic';
 import type { Child } from '../../domain/types';
 import { useStore } from '../../state/store';
 import { Icon } from '../components/Icon';
-import { FloatingIsland, RefugeItemPreview, RefugeScene } from '../components/Illustrations';
+import islandsBackdrop from '../../assets/iles.webp';
+import { FloatingIsland, RefugeItemPreview } from '../components/Illustrations';
+import { RefugeRoom } from './RefugeRoom';
 import { Panda } from '../components/Panda';
 import { Button, Empty, SubjectTag } from '../components/ui';
 import { KidStatus } from './kidParts';
@@ -58,7 +60,7 @@ export function Islands({ child }: { child: Child }) {
     <section className="kid-card" aria-labelledby="islands-title">
       <h1 id="islands-title" className="flex"><Icon name="map" size={28} /> Mes îles</h1>
       <p className="muted">Chaque île est une matière. Les notions apparaissent quand tu les as travaillées.</p>
-      <div className="islands-map">
+      <div className="islands-map" style={{ ['--islands-img' as string]: `url(${islandsBackdrop})` }}>
         {SUBJECTS.map((s, i) => {
           const mine = hws.filter((h) => h.subject === s.id && h.progress !== 'a_faire');
           const topics = [...new Set(mine.map((h) => h.topic ?? h.title))];
@@ -89,7 +91,7 @@ export function Islands({ child }: { child: Child }) {
 }
 
 /** Le refuge : accessoires débloqués par l'effort, jamais achetés. */
-export function Refuge({ child }: { child: Child }) {
+export function Refuge({ child, onNavigate }: { child: Child; onNavigate: (p: 'carnet' | 'iles') => void }) {
   const { dispatch } = useStore();
   return (
     <section className="kid-card" aria-labelledby="refuge-title">
@@ -98,9 +100,7 @@ export function Refuge({ child }: { child: Child }) {
         Les lucioles s’allument quand tu fais des efforts : terminer une tâche, corriger une erreur, demander de l’aide, finir une séance.
         Tu en as <b>{child.fireflies}</b>.
       </p>
-      <RefugeScene shown={child.refugeShown}>
-        <Panda mood="accueil" size={120} animated={child.preferences.animations} />
-      </RefugeScene>
+      <RefugeRoom child={child} onCarnet={() => onNavigate('carnet')} onIles={() => onNavigate('iles')} />
       <h2 className="mt-1">Accessoires</h2>
       <div className="refuge-items">
         {REFUGE_ITEMS.map((it) => {

@@ -21,7 +21,7 @@ export type HomeworkDraft = Pick<
   'childId' | 'subject' | 'topic' | 'title' | 'instructions' | 'dueDate' | 'estimatedMinutes' | 'attachment' | 'adultActivity' | 'missionId'
 >;
 
-export type ChildDraft = Pick<Child, 'displayName' | 'level' | 'companionName' | 'preferences'>;
+export type ChildDraft = Pick<Child, 'displayName' | 'level' | 'companionName' | 'preferences'> & { introSeen?: boolean };
 
 export type Action =
   // Parent

@@ -5,11 +5,11 @@ import type { Child } from '../../domain/types';
 import { useStore } from '../../state/store';
 import { Icon } from '../components/Icon';
 import heroIslands from '../../assets/iles.webp';
-import { Panda } from '../components/Panda';
+import { PepinLive } from '../../companion/Pepin';
 import { Button, Empty, SubjectTag } from '../components/ui';
 import { DuePill, greeting, KidStatus } from './kidParts';
 
-export function ChildHome({ child, onStart, onNavigate, onAdd }: { child: Child; onStart: () => void; onNavigate: (p: 'carnet' | 'refuge' | 'iles') => void; onAdd: () => void }) {
+export function ChildHome({ child, onStart, onNavigate, onAdd, onIntro, onPractice }: { child: Child; onStart: () => void; onNavigate: (p: 'carnet' | 'refuge' | 'iles') => void; onAdd: () => void; onIntro: () => void; onPractice: () => void }) {
   const { data, dispatch } = useStore();
   const tasks = todaysWork(data, child.id);
   const running = activeSession(data, child.id);
@@ -45,7 +45,9 @@ export function ChildHome({ child, onStart, onNavigate, onAdd }: { child: Child;
   return (
     <>
       <section className="kid-hero" aria-labelledby="kid-hello" style={{ ['--hero-img' as string]: `url(${heroIslands})` }}>
-        <Panda mood="accueil" size={170} label={`${child.companionName}, ton compagnon panda roux, te fait coucou`} animated={child.preferences.animations} />
+        <div role="img" aria-label={`${child.companionName}, ton compagnon panda roux`}>
+          <PepinLive variant="hero" size={180} bubble={false} />
+        </div>
         <div className="kid-hero__bubble">
           <h1 id="kid-hello">{g.title}</h1>
           <p className="mb-0">
@@ -119,6 +121,11 @@ export function ChildHome({ child, onStart, onNavigate, onAdd }: { child: Child;
           <Button variant="secondary" icon="home" onClick={() => onNavigate('refuge')}>Refuge</Button>
         </div>
       </div>
+      <p className="center small" style={{ marginTop: '1rem' }}>
+        <button className="link-btn" onClick={onIntro}>Revoir la présentation de {child.companionName}</button>
+        {' · '}
+        <button className="link-btn" onClick={onPractice}>Mission d’essai</button>
+      </p>
     </>
   );
 }

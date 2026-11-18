@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { checkFor, errorFeedback, isCorrect, stepsFor, type Answer, type ChoiceQuestion, type Mission } from '../../domain/mission';
 import type { Child, Homework, MissionProgress } from '../../domain/types';
+import { useCompanionEmit } from '../../companion/CompanionProvider';
+import type { Action } from '../../domain/logic';
 import { useStore } from '../../state/store';
 import { Icon } from '../components/Icon';
 import { Panda, type PandaMood } from '../components/Panda';
@@ -125,17 +127,22 @@ function SubSteps({ substeps, onAllDone }: { substeps: { prompt: string; answer:
   );
 }
 
-export function MissionPlayer({ mission, hw, child, handleRef, onFinished }: {
+export function MissionPlayer({ mission, hw, child, handleRef, onFinished, practice = false }: {
   mission: Mission;
   hw: Homework;
   child: Child;
   handleRef: React.MutableRefObject<MissionHandle | null>;
   onFinished: () => void;
+  /** Mission d'essai : rien n'est enregistré dans les devoirs ni dans la progression. */
+  practice?: boolean;
 }) {
-  const { data, dispatch } = useStore();
+  const store = useStore();
+  const data = store.data;
+  const dispatch = practice ? (_a: Action) => { void _a; } : store.dispatch;
+  const emit = useCompanionEmit();
   const steps = stepsFor(mission, child.level);
   const check = checkFor(mission, child.level);
-  const saved = data.missionProgress[hw.id];
+  const saved = practice ? undefined : data.missionProgress[hw.id];
   const [progress, setProgress] = useState<MissionProgress>(
     () => saved ?? { stepIndex: 0, steps: steps.map(() => ({ firstTry: null, solved: false, hints: 0 })), checkPassed: null },
   );
@@ -157,6 +164,7 @@ export function MissionPlayer({ mission, hw, child, handleRef, onFinished }: {
     if (inCheck || solved) return;
     setRungs((prev) => (prev.includes(r) ? prev : [...prev, r]));
     dispatch({ type: 'hw/help', id: hw.id, kind: r });
+    emit({ type: 'hint' });
     const p = { ...progress, steps: progress.steps.map((s, i) => (i === progress.stepIndex ? { ...s, hints: s.hints + 1 } : s)) };
     persist(p);
     setTimeout(() => helpPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 50);
@@ -183,9 +191,11 @@ export function MissionPlayer({ mission, hw, child, handleRef, onFinished }: {
       if (wrongThisStep.current > 0) dispatch({ type: 'hw/errorCorrected', id: hw.id });
       const firstTry = st.firstTry === null ? st.hints === 0 : st.firstTry;
       persist({ ...progress, steps: progress.steps.map((s, i) => (i === progress.stepIndex ? { ...s, solved: true, firstTry } : s)) });
+      emit({ type: 'step_correct' });
       setFeedback({ tone: 'ok', text: wrongThisStep.current > 0 ? `Tu as corrigé ton erreur, c’est exactement comme ça qu’on progresse. ${step.success}` : step.success });
     } else {
       wrongThisStep.current += 1;
+      emit({ type: 'wrong' });
       dispatch({ type: 'hw/wrongAttempt', id: hw.id });
       if (st.firstTry === null) persist({ ...progress, steps: progress.steps.map((s, i) => (i === progress.stepIndex ? { ...s, firstTry: false } : s)) });
       const specific = errorFeedback(step, value);
@@ -209,12 +219,12 @@ export function MissionPlayer({ mission, hw, child, handleRef, onFinished }: {
         <p className="small muted">Elle aide à voir si la méthode est comprise, au-delà des réponses.</p>
         <MiniChoice
           q={check}
-          onAnswered={(ok) => { setCheckAnswered(true); persist({ ...progress, checkPassed: ok }); }}
+          onAnswered={(ok) => { setCheckAnswered(true); persist({ ...progress, checkPassed: ok }); emit({ type: ok ? 'check_correct' : 'check_retry' }); }}
         />
         {checkAnswered && (
           <div className="center mt-1">
             <Button variant="sun" size="lg" icon="flag" onClick={() => { dispatch({ type: 'mission/complete', id: hw.id, progress }); onFinished(); }}>
-              Terminer la mission
+              {practice ? 'Terminer la mission d’essai' : 'Terminer la mission'}
             </Button>
           </div>
         )}

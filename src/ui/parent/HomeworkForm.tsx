@@ -53,7 +53,7 @@ interface FieldsProps {
 export function HomeworkFields({ draft, onChange, childrenList, idPrefix, showAttachment = true, errors = {} }: FieldsProps) {
   const set = <K extends keyof HomeworkDraft>(k: K, v: HomeworkDraft[K]) => onChange({ ...draft, [k]: v });
   const child = childrenList.find((c) => c.id === draft.childId);
-  const missions = MISSIONS.filter((m) => m.level === 'adaptatif' || m.level === child?.level);
+  const missions = MISSIONS.filter((m) => !m.practice && (m.level === 'adaptatif' || m.level === child?.level));
   const [attErr, setAttErr] = useState('');
   const id = (s: string) => `${idPrefix}-${s}`;
 

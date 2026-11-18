@@ -53,7 +53,8 @@ function ChildForm({ initial, onSubmit, onCancel }: { initial: ChildDraft; onSub
         <fieldset className="field" style={{ border: 0, padding: 0 }}>
           <legend style={{ fontWeight: 700, marginBottom: '.3rem' }}>Affichage</legend>
           <label className="checkbox"><input type="checkbox" checked={d.preferences.textSize === 'grand'} onChange={(e) => setD({ ...d, preferences: { ...d.preferences, textSize: e.target.checked ? 'grand' : 'normal' } })} /> Texte plus grand</label>
-          <label className="checkbox"><input type="checkbox" checked={d.preferences.animations} onChange={(e) => setD({ ...d, preferences: { ...d.preferences, animations: e.target.checked } })} /> Animations</label>
+          <label className="checkbox"><input type="checkbox" checked={!d.preferences.animations} onChange={(e) => setD({ ...d, preferences: { ...d.preferences, animations: !e.target.checked } })} /> Réduire les animations</label>
+          <label className="checkbox"><input type="checkbox" checked={d.preferences.voice === true} onChange={(e) => setD({ ...d, preferences: { ...d.preferences, voice: e.target.checked } })} /> Voix du compagnon <span className="muted small">(lecture sur demande)</span></label>
         </fieldset>
       </div>
       <div className="modal__actions">
@@ -86,7 +87,7 @@ export function Children() {
                 <div style={{ flex: 1, minWidth: 180 }}>
                   <h2 className="mb-0">{c.displayName}</h2>
                   <p className="muted mb-0">{c.level} · compagnon : <b>{c.companionName}</b></p>
-                  <p className="small mb-0">Séance de {c.preferences.sessionMinutes} min · texte {c.preferences.textSize === 'grand' ? 'agrandi' : 'normal'} · animations {c.preferences.animations ? 'activées' : 'désactivées'}</p>
+                  <p className="small mb-0">Séance de {c.preferences.sessionMinutes} min · texte {c.preferences.textSize === 'grand' ? 'agrandi' : 'normal'} · animations {c.preferences.animations ? 'activées' : 'réduites'} · voix {c.preferences.voice ? 'activée' : 'désactivée'}</p>
                   <p className="small muted">{n} devoir{n > 1 ? 's' : ''} · {c.fireflies} lucioles d’effort</p>
                   {confirm === c.id ? (
                     <div className="notice" role="alert">

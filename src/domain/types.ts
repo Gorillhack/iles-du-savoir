@@ -91,6 +91,8 @@ export interface ChildPreferences {
   animations: boolean;
   /** Durée de séance souhaitée, en minutes. */
   sessionMinutes: number;
+  /** Voix du compagnon (synthèse locale, sur action explicite). Désactivée par défaut. */
+  voice?: boolean;
 }
 
 export interface Child {
@@ -104,6 +106,8 @@ export interface Child {
   fireflies: number;
   /** Accessoires du refuge visibles (choisis par l'enfant). */
   refugeShown: string[];
+  /** Présentation de première visite déjà vue ou ignorée. */
+  introSeen?: boolean;
 }
 
 export type HelpEventKind = 'indice' | 'bloque' | 'adulte' | 'reformulation' | 'decomposition' | 'exemple';

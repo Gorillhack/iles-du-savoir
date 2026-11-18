@@ -3,12 +3,16 @@
 export function FloatingIsland({ color = '#38B8AC', size = 120, detail = 'tree', className = '' }: { color?: string; size?: number; detail?: 'tree' | 'hut' | 'flag' | 'rocks'; className?: string }) {
   return (
     <svg viewBox="0 0 140 110" width={size} height={(size * 110) / 140} aria-hidden className={`island ${className}`}>
+      <defs><linearGradient id="rock-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#C49A74" /><stop offset="1" stopColor="#8E6A50" /></linearGradient></defs>
+      <g filter="url(#paint-soft)">
       <ellipse cx={70} cy={104} rx={34} ry={4} fill="#25345B" opacity={0.08} />
       {/* Roche */}
-      <path d="M18 56 Q70 64 122 56 Q112 78 92 88 Q78 100 70 102 Q60 96 48 88 Q28 78 18 56Z" fill="#B98D6A" />
+      <path d="M18 56 Q70 64 122 56 Q112 78 92 88 Q78 100 70 102 Q60 96 48 88 Q28 78 18 56Z" fill="url(#rock-grad)" />
+      <path d="M30 66 Q48 74 44 86 M86 70 Q96 78 90 90 M64 72 Q70 84 66 96" stroke="#7E5A40" strokeWidth={1.2} fill="none" opacity={0.5} />
       <path d="M40 70 Q70 76 100 70 Q90 84 76 92 Q66 90 56 84Z" fill="#9C7254" />
       {/* Herbe */}
       <ellipse cx={70} cy={55} rx={54} ry={12} fill={color} />
+      <ellipse cx={70} cy={57} rx={54} ry={10} fill="#25345B" opacity={0.08} />
       <ellipse cx={70} cy={52} rx={50} ry={9} fill="#fff" opacity={0.18} />
       {detail === 'tree' && (
         <g>
@@ -37,6 +41,7 @@ export function FloatingIsland({ color = '#38B8AC', size = 120, detail = 'tree',
           <ellipse cx={80} cy={47} rx={7} ry={5} fill="#D9D2C6" />
         </g>
       )}
+      </g>
     </svg>
   );
 }
@@ -51,7 +56,7 @@ export function Cloud({ className = '', width = 90 }: { className?: string; widt
 
 /* ------------------------- Accessoires du refuge ------------------------- */
 
-const items: Record<string, (p: { x: number; y: number }) => React.ReactElement> = {
+export const refugeItemArt: Record<string, (p: { x: number; y: number }) => React.ReactElement> = {
   lanterne: ({ x, y }) => (
     <g transform={`translate(${x} ${y})`}>
       <path d="M14 0 V8" stroke="#5B4636" strokeWidth={2} />
@@ -104,45 +109,33 @@ const items: Record<string, (p: { x: number; y: number }) => React.ReactElement>
   ),
 };
 
-export function RefugeScene({ shown, children }: { shown: string[]; children?: React.ReactNode }) {
-  const has = (id: string) => shown.includes(id);
-  return (
-    <div className="refuge-scene">
-      <svg viewBox="0 0 360 240" className="refuge-svg" role="img" aria-label={`Intérieur du refuge${shown.length ? `, avec : ${shown.join(', ')}` : ''}`}>
-        {/* Murs en bois et fenêtre ronde */}
-        <rect x={0} y={0} width={360} height={240} fill="#F3DFC1" />
-        {Array.from({ length: 9 }).map((_, i) => (
-          <rect key={i} x={i * 40} y={0} width={1.5} height={170} fill="#E2C59E" />
-        ))}
-        <circle cx={250} cy={70} r={42} fill="#25345B" />
-        <circle cx={250} cy={70} r={36} fill="#3A4C7E" />
-        <circle cx={236} cy={58} r={2} fill="#FFF8EC" />
-        <circle cx={262} cy={80} r={1.5} fill="#FFF8EC" />
-        <circle cx={258} cy={52} r={1.2} fill="#F6C65B" />
-        <path d="M232 92 Q250 74 270 92" fill="#38B8AC" opacity={0.6} />
-        <path d="M214 70 H286 M250 34 V106" stroke="#B98D6A" strokeWidth={4} />
-        <circle cx={250} cy={70} r={42} fill="none" stroke="#B98D6A" strokeWidth={7} />
-        {/* Sol et tapis */}
-        <rect x={0} y={170} width={360} height={70} fill="#C99A6B" />
-        <ellipse cx={170} cy={205} rx={110} ry={20} fill="#D65A2E" opacity={0.85} />
-        <ellipse cx={170} cy={205} rx={90} ry={14} fill="none" stroke="#F6C65B" strokeWidth={3} strokeDasharray="4 6" />
-        {has('etagere') && items.etagere({ x: 30, y: 60 })}
-        {has('lanterne') && items.lanterne({ x: 120, y: 20 })}
-        {has('hamac') && items.hamac({ x: 200, y: 120 })}
-        {has('plante') && items.plante({ x: 310, y: 118 })}
-        {has('longue-vue') && items['longue-vue']({ x: 300, y: 60 })}
-        {has('coussin') && items.coussin({ x: 40, y: 178 })}
-      </svg>
-      {children}
-    </div>
-  );
-}
-
 export function RefugeItemPreview({ id }: { id: string }) {
-  const draw = items[id];
+  const draw = refugeItemArt[id];
   return (
     <svg viewBox="-6 -6 102 72" width={72} height={52} aria-hidden>
       {draw?.({ x: 0, y: 0 })}
+    </svg>
+  );
+}
+
+/**
+ * Filtres « peinture » partagés : grain de papier et bords légèrement irréguliers,
+ * pour rapprocher les décors vectoriels des illustrations texturées de la planche.
+ * À monter une seule fois dans l'espace enfant.
+ */
+export function PaintFilters() {
+  return (
+    <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden focusable="false">
+      <defs>
+        <filter id="paint-soft" x="-5%" y="-5%" width="110%" height="110%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="3" result="warp" />
+          <feDisplacementMap in="SourceGraphic" in2="warp" scale="3" xChannelSelector="R" yChannelSelector="G" result="wobbly" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="8" result="grain" />
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.22  0 0 0 0 0.12  0 0 0 0.22 0" result="grainTint" />
+          <feComposite in="grainTint" in2="wobbly" operator="in" result="grainOnShape" />
+          <feMerge><feMergeNode in="wobbly" /><feMergeNode in="grainOnShape" /></feMerge>
+        </filter>
+      </defs>
     </svg>
   );
 }

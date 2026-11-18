@@ -79,26 +79,67 @@ Les lucioles récompensent l’effort : tâche terminée (+2), erreur corrigée 
 
 Zones tactiles d’au moins 48 px, navigation clavier, lien d’évitement, libellés ARIA, focus visible. Chaque statut combine icône, texte et couleur. Couleurs « encre » renforcées pour un contraste AA sur fond crème. Option texte agrandi et animations désactivables par enfant ; `prefers-reduced-motion` est respecté.
 
-## Ressources graphiques
+## Pépin, compagnon vivant
 
-Les illustrations du compagnon et le décor des îles viennent de la planche visuelle (`src/assets/*.webp`) : recadrées, réduites, bords fondus sur le crème de l’interface. Le panda SVG de `Panda.tsx` reste en repli.
+### Architecture
 
-| Expression | Source utilisée |
+```
+src/companion/
+  types.ts               états (idle, greeting, thinking, encouraging, celebrating, resting) et événements
+  machine.ts             logique pure : événement → état + durée (anti-spam, délai du salut)
+  messages.ts            messages courts et variés, sans répétition immédiate
+  CompanionProvider.tsx  point central : emit(), un seul minuteur, salut unique, onglet masqué
+  PepinFigure.tsx        rendu seul (calques, paupières, poses)
+  Pepin.tsx              PepinLive (accueil, barre de séance, scène) et bulle
+  useSpeech.ts           voix locale du navigateur, sur action explicite
+```
+
+Les composants émettent des événements (`useCompanionEmit()`) ; ils ne pilotent jamais l’animation directement. L’espace parent n’a pas de fournisseur : les émissions y sont ignorées.
+
+| Événement | État | Exemple de message |
+|---|---|---|
+| Arrivée dans l’espace enfant (1 fois / 30 min) | greeting | « Coucou Nathan ! » |
+| Début de séance (1 fois par séance) | encouraging | « On regarde la consigne ensemble ? » |
+| Indice, blocage | thinking | « Bonne idée de demander. Voici une piste. » |
+| Réponse à reprendre | encouraging | « Pas encore. Relis tranquillement et réessaie. » |
+| Étape réussie, vérification réussie | celebrating | « Étape réussie ! » |
+| Tâche terminée par l’enfant | encouraging | « Tu as terminé cette étape ! » (jamais « c’est juste ») |
+| Pause / reprise | resting / idle | « Petite pause. Je t’attends ici. » |
+| Demande d’adulte | encouraging | « C’est noté. Un adulte va venir t’aider. » |
+| Toucher Pépin au refuge (≥ 2,5 s d’intervalle) | celebrating | « Hé ! Ça chatouille ! » |
+
+En séance, Pépin est dans une **barre fixe de hauteur constante** en bas de l’écran : il ne recouvre jamais l’exercice (le contenu a la marge nécessaire) et ne bloque aucun clic.
+
+### Ce qui est vraiment animé, et ce qui ne l’est pas
+
+Ressources : les 4 poses de la planche, **détourées avec une vraie transparence** (modèle de détourage local, sans fond ni rectangle de couleur). La pose d’accueil est découpée en **3 calques** (corps, bras levé, queue).
+
+- **Réellement articulé** : le bras qui fait coucou (rotation à l’épaule), la queue qui se balance à sa base, le clignement (paupières vectorielles posées sur les yeux de l’illustration), la respiration, les yeux fermés au repos.
+- **Image entière** : réflexion, encouragement, célébration. Elles apparaissent en fondu avec un seul petit mouvement d’ensemble (inclinaison, hochement, petit saut). Ce n’est pas une animation détaillée.
+- Pas d’animation en continu qui attire l’œil : respiration très légère, clignement toutes les ~6 s, queue toutes les ~15 s. Tout s’arrête si l’onglet est masqué, si l’enfant coche « Réduire les animations » ou si le système demande moins de mouvement.
+
+### Ressources graphiques à produire
+
+Pour aller au-delà, fournir des fichiers **PNG ou WebP transparents, 1024 px de haut, même cadrage et même ligne de sol** que `accueil-body.webp` :
+
+| Fichier | Usage |
 |---|---|
-| Accueil | grand panda qui fait coucou |
-| Réflexion | panda au point d’interrogation |
-| Explication | panda à la loupe et à l’ampoule |
-| Célébration | panda aux poings levés |
-| Encouragement | **pas de pose dédiée** : réutilise les poings levés |
+| `pepin-idle-bras-bas.png` | repos sans le bras levé (aujourd’hui le bras reste levé en attente et au repos) |
+| `pepin-encourage.png` | vraie pose d’encouragement (pouce levé, sourire) ; aujourd’hui on réutilise la pose à la loupe |
+| `pepin-repos.png` | pose assise ou endormie pour la pause |
+| `pepin-reflexion-{corps,bras}.png`, `pepin-celebration-{corps,bras-gauche,bras-droit}.png` | calques séparés pour articuler ces poses comme l’accueil |
+| `pepin-tete.png` + `pepin-bouche-{fermee,ouverte}.png` | mouvements de tête et bouche qui parle (voix) |
+| `refuge-fond.png` (1800 × 1200), accessoires séparés | refuge entièrement peint dans le style de la planche ; aujourd’hui décor vectoriel avec grain et bords irréguliers |
+| `ile-{maths,francais,…}.png` | une île peinte par matière |
 
-Pour la version finale, il manque :
+Il suffit de remplacer ou d’ajouter les fichiers dans `src/assets/pepin/` et d’ajuster `PepinFigure.tsx`. L’API des composants ne change pas.
 
-- une pose « encouragement » distincte (pouce levé, sourire) ;
-- chaque pose **séparée, sur fond transparent** (PNG ou SVG, 1024 px), avec le même cadrage et la même ligne de sol ;
-- une version « mini » lisible à 64 px pour le panneau d’aide ;
-- le refuge et les îles en éléments séparés si l’on veut les animer ou y placer les accessoires.
+## Refuge, première visite, voix
 
-Il suffira de remplacer les fichiers de `src/assets/` : l’API de `Panda` (`mood`, `size`, `label`, `animated`) ne change pas.
+- **Refuge** : la carte au mur ouvre les îles, le carnet sur la caisse ouvre les devoirs, toucher Pépin déclenche une réaction (limitée). Les accessoires débloqués apparaissent dans la pièce. Chaque zone a une étiquette visible, un nom accessible, un effet au survol et au focus, et une zone tactile d’au moins 48 px. Trois raccourcis explicites sont proposés sous le décor. Pas de bibliothèque cliquable : il n’existe pas encore de zone de leçons.
+- **Première visite** (carnet vide, présentation jamais vue) : 4 étapes, avec un bouton « Passer » à chaque étape. Pépin se présente, l’enfant choisit son prénom, petite visite du carnet, des îles et du refuge, puis une mission d’essai facultative. La mission d’essai (« Les noisettes de Pépin ») n’écrit rien : aucun devoir, aucun statut, aucune luciole. Ensuite, la présentation reste accessible depuis l’accueil et les réglages.
+- **Réglages enfant** (roue dentée) : voix du compagnon (désactivée par défaut), réduire les animations, texte plus grand. Les mêmes options sont dans le profil côté parent.
+- **Voix** : synthèse du navigateur, avec une voix française locale de préférence. Aucun service payant, rien n’est envoyé. Elle ne lit jamais toute seule : le bouton « Écouter » apparaît dans la bulle, avec « Arrêter » pendant la lecture. Le texte reste toujours affiché, et s’il n’y a pas de voix française sur l’appareil, tout fonctionne quand même.
 
 ## Limites connues
 
