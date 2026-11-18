@@ -1,0 +1,10 @@
+{
+  "name": "Les Îles du Savoir",
+  "short_name": "Îles du Savoir",
+  "lang": "fr",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#FFF8EC",
+  "theme_color": "#25345B",
+  "icons": [{ "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
+}
