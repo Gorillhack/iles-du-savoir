@@ -77,7 +77,7 @@ function SessionEnd({ session, child, onHome }: { session: WorkSession; child: C
   if (done) lines.push(`Tu as terminé ${done} tâche${done > 1 ? 's' : ''}.`);
   if (corrected) lines.push(`Tu as corrigé ${corrected} erreur${corrected > 1 ? 's' : ''} toi-même : c’est comme ça qu’on apprend.`);
   if (session.hintsUsed) lines.push(`Tu as utilisé ${session.hintsUsed} aide${session.hintsUsed > 1 ? 's' : ''} au bon moment.`);
-  if (blocked || askedAdult) lines.push('Tu as dit quand c’était difficile. C’est une vraie qualité d’explorateur·rice.');
+  if (blocked || askedAdult) lines.push('Tu as dit quand c’était difficile. C’est une vraie qualité d’aventurier !');
   if (!lines.length) lines.push('Tu as ouvert ton carnet et regardé ton programme : c’est un bon début.');
 
   return (
